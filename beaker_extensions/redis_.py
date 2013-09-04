@@ -21,7 +21,8 @@ class RedisManager(NoSqlManager):
                  **params):
         self.db = params.pop('db', None)
         self.dbpass = params.pop('password', None)
-        self.connection_pools = {}
+        self.connection_pool = params.get('redis_connection_pool', None)
+        self.expires = params.get('expires', params.get('expiretime', None))
         NoSqlManager.__init__(self,
                               namespace,
                               url=url,
@@ -30,31 +31,28 @@ class RedisManager(NoSqlManager):
                               **params)
 
     def open_connection(self, host, port, **params):
-        pool_key = self._format_pool_key(host, port, self.db)
-        if pool_key not in self.connection_pools:
-            self.connection_pools[pool_key] = ConnectionPool(host=host,
-                                                             port=port,
-                                                             db=self.db,
-                                                             password=self.dbpass)
-        self.db_conn = StrictRedis(connection_pool=self.connection_pools[pool_key],
-                                   **params)
-
+        if not self.connection_pool:
+            self.connection_pool = ConnectionPool(host=host, port=port, db=self.db,
+                    password=self.dbpass)
+        self.db_conn = StrictRedis(connection_pool=self.connection_pool, **params)
+    
     def __contains__(self, key):
         return self.db_conn.exists(self._format_key(key))
 
     def set_value(self, key, value, expiretime=None):
         key = self._format_key(key)
-
-        #
         # beaker.container.Value.set_value calls NamespaceManager.set_value
         # however it (until version 1.6.4) never sets expiretime param.
         #
         # Checking "type(value) is tuple" is a compromise
         # because Manager class can be instantiated outside container.py (See: session.py)
-        #
         if (expiretime is None) and (type(value) is tuple):
             expiretime = value[1]
-
+        # If the machinery above fails, then pickup the expires time from the
+        # init params.
+        if not expiretime and self.expires is not None:
+            expiretime = self.expires
+        # Set or setex, according to whether we got an expires time or not.
         if expiretime:
             self.db_conn.setex(key, expiretime, pickle.dumps(value, 2))
         else:
