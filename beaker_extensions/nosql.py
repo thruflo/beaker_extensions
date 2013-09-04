@@ -5,6 +5,8 @@ from beaker.synchronization import file_synchronizer
 from beaker.util import verify_directory
 from beaker.exceptions import MissingCacheParameter
 
+from urlparse import urlparse
+
 try:
     import cPickle as pickle
 except:
@@ -32,9 +34,14 @@ class NoSqlManager(NamespaceManager):
         if len(parts) > 1:
             conn_params = dict(p.split('=', 1) for p in parts[1].split('&'))
 
-        host, port = url.split(':', 1)
-
-        self.open_connection(host, int(port), **conn_params)
+        netloc = urlparse(url).netloc
+        parts = netloc.split(':')
+        port = parts.pop()
+        if port:
+            port = int(port)
+        host = ':'.join(parts)
+        
+        self.open_connection(host, port, **conn_params)
 
     def open_connection(self, host, port):
         self.db_conn = None
