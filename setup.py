@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.2.2'
+version = '0.2.3'
 
 setup(name='beaker_extensions',
       version=version,
@@ -30,5 +30,6 @@ setup(name='beaker_extensions',
       ringo = beaker_extensions.ringo:RingoManager
       cassandra = beaker_extensions.cassandra:CassandraManager
       ultra = beaker_extensions.ultra:UltraNamespaceManager
+      ext:bmemcached = beaker_extensions.bmemcached_:BMemcachedNamespaceManager
       """,
       )
