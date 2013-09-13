@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.2.1'
+version = '0.2.2'
 
 setup(name='beaker_extensions',
       version=version,
@@ -29,5 +29,6 @@ setup(name='beaker_extensions',
       dynomite = beaker_extensions.dynomite_:DynomiteManager
       ringo = beaker_extensions.ringo:RingoManager
       cassandra = beaker_extensions.cassandra:CassandraManager
+      ultra = beaker_extensions.ultra:UltraNamespaceManager
       """,
       )
